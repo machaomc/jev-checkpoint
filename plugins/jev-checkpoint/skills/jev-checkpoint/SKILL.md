@@ -1,0 +1,28 @@
+---
+name: jev-checkpoint
+description: Use when the user requests Jev Checkpoint, or when a coding task changes behavior, contracts, reliability, security boundaries, or multiple related files and Jev Checkpoint tools are available. Usually skip formatting and prose-only edits.
+---
+
+# Jev Checkpoint
+
+Use Jev as a quality signal for a focused change. Codex owns diagnosis, code changes, validation and final judgment. Jev returns scores and confidence, not explanations or proven defects.
+
+## Start
+
+Call `jev_checkpoint_status` before the first evaluation. `ready` means credentials exist, not that authentication succeeded. If unavailable, continue authorized local work and report that Jev evaluation did not run. The returned `configureScript` is a local Node script for the user to run in a terminal; never request a key in chat or put one in tool arguments. Read [setup](references/setup.md) only for installation or configuration problems.
+
+Choose one stable `checkpointId` for the task. Preserve it across retries and changes; recover it from earlier tool calls when resuming. If the previous ID or attempt count cannot be recovered, continue local review and disclose the uncertainty instead of opening a fresh budget. Use this workflow instead of running a second `jev-review` loop over the same work.
+
+## Evaluate and improve
+
+1. Implement the requested change and run relevant checks. For a review-only request, inspect and report without editing. If there is no actual change diff, review locally and disclose that this diff-oriented Jev workflow was skipped; do not invent a diff.
+2. Collect the current task-owned diff. Include untracked files only when part of this task; leave unrelated user changes untouched. Add callers, contracts or validation evidence only when necessary. Exclude secrets, credential files and unrelated private content. The submitted context goes to TypeSafe; follow the user's data-sharing restrictions. If essential context cannot be shared, skip external review and disclose the limitation.
+3. Call `jev_checkpoint_review` with `checkpointId`, `task`, `diff`, and optional `context` / `files`. Keep task wording and scope stable. Submit current code, not an obsolete diff. The combined JSON-serialized `task`, `diff`, `context` and `files` is limited to 48,000 UTF-8 bytes; select a coherent slice rather than blindly truncating evidence.
+4. Inspect weak or uncertain dimensions against actual code and requirements. Scores use **0–4**, higher is better. `assessable:false` means insufficient evidence. `needsInspection` is a hint, not a defect. There is no overall pass score. Do not rewrite code to chase a number.
+5. If a concrete problem warrants a change within the user's request, make the smallest justified fix and validate it. Use the same checkpoint ID for one follow-up evaluation; comparison is computed locally. Stop when no evidence-backed improvement remains or the two-attempt budget is exhausted.
+
+The server allows two outgoing attempts per checkpoint per process, including failures. Identical successful inputs are cached. Do not resubmit unchanged inputs for a different score, rotate IDs, or restart to evade the task budget. An authentication or timeout error is not a passing review. Fix its cause before considering a retry within the remaining budget. If work changes after the last evaluation, identify that result as stale.
+
+## Final report
+
+Briefly state: code-backed findings and actions; checks actually run; whether Jev evaluated the final diff, was skipped, failed, or became stale; attempts used and relevant remaining uncertainty. Scores never replace tests or user acceptance criteria. Do not claim measured speedups or cost savings without a baseline.

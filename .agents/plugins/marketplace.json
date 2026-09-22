@@ -1,0 +1,20 @@
+{
+  "name": "jev-checkpoint",
+  "interface": {
+    "displayName": "Jev Checkpoint"
+  },
+  "plugins": [
+    {
+      "name": "jev-checkpoint",
+      "source": {
+        "source": "local",
+        "path": "./plugins/jev-checkpoint"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

@@ -27,7 +27,29 @@ The explicitly invoked live smoke test used a temporary user-supplied key with a
 
 Codex CLI `0.153.4` successfully added the local repository marketplace, listed `jev-checkpoint@jev-checkpoint`, and installed/enabled version `0.1.0`. The installed plugin has a bundled MCP server and a discoverable skill.
 
-Remote URL installation and hosted CI are verified after the initial push; their outcomes will be recorded in a follow-up documentation commit.
+After publishing commit `87f8cc4221121c5ffac00ac4c7f424570e1ab396`, the local test installation and marketplace were removed. The following commands then succeeded against the public GitHub repository:
+
+```sh
+codex plugin marketplace add https://github.com/machaomc/jev-checkpoint.git
+codex plugin add jev-checkpoint@jev-checkpoint
+```
+
+- Codex reported the marketplace source as `git`, with the GitHub URL above, and the plugin as installed and enabled.
+- A recursive comparison found the installed plugin identical to the committed plugin directory, including its bundled server and skill.
+- `scripts/smoke-installed.mjs` started the installed runtime through its MCP manifest, discovered both tools, found the configuration helper and verified missing-key handling. This installation check made zero paid API requests.
+- The plugin remains installed from the remote marketplace. No persistent API key was configured by this verification.
+
+## Hosted CI
+
+[GitHub Actions run 35681987240](https://github.com/machaomc/jev-checkpoint/actions/runs/35681987240) passed for the published implementation commit on all five configurations:
+
+| Operating system | Node.js |
+| --- | --- |
+| Ubuntu | 20, 22, 24 |
+| macOS | 22 |
+| Windows | 22 |
+
+Every job ran dependency installation, TypeScript checking, the standalone build, all 23 tests, package validation and the check that the committed runtime matches a fresh build. No live API key is used in CI.
 
 ## Limits
 

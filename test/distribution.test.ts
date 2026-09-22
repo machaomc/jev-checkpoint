@@ -198,9 +198,9 @@ test('the extracted skill CLI reports its own paths and enforces the persisted a
     assert.equal(reported.ready, false);
     assert.equal(reported.authenticationVerified, false);
     assert.equal(reported.maxAttemptsPerCheckpoint, 2);
-    assert.ok(String(reported.cliScript).endsWith('scripts/cli.cjs'));
+    assert.equal(resolve(String(reported.cliScript)), cli);
     assert.ok(existsSync(String(reported.cliScript)));
-    assert.ok(String(reported.configureScript).endsWith('scripts/configure.mjs'));
+    assert.equal(resolve(String(reported.configureScript)), join(root, 'scripts', 'configure.mjs'));
     assert.ok(existsSync(String(reported.configureScript)));
 
     writeFileSync(payload, JSON.stringify({ checkpointId: 'skill-cli-smoke', task: 'Fix sum', diff: '-a-b\n+a+b' }));

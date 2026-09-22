@@ -37,7 +37,7 @@ try {
   assert.equal(reported.interface, 'cli');
   assert.equal(reported.ready, false);
   assert.equal(reported.authenticationVerified, false);
-  assert.equal(reported.configureScript, join(root, 'scripts', 'configure.mjs'));
+  assert.equal(resolve(reported.configureScript), join(root, 'scripts', 'configure.mjs'));
   assert.ok(existsSync(reported.configureScript));
   const cliReview = spawnSync(process.execPath, [cli, 'review', '-'],
     { input: JSON.stringify({ checkpointId: 'installation-cli-smoke', task: 'Fix sum', diff: '-a-b\n+a+b' }),

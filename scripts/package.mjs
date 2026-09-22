@@ -10,7 +10,25 @@ const hosts = {
   claude: 'packages/claude/jev-checkpoint',
   workbuddy: 'packages/workbuddy/jev-checkpoint'
 };
+// The skill-market channel installs instructions and scripts only; it never registers an MCP server.
+const skillHost = 'packages/workbuddy-skill/jev-checkpoint';
 const readJson = path => JSON.parse(readFileSync(path, 'utf8'));
+function composeSkillMarkdown(markdown, extra) {
+  const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(markdown);
+  if (!match) throw Error('The shared SKILL.md must begin with YAML frontmatter');
+  const rendered = Object.entries(extra).map(([key, value]) => [key, `${key}: ${JSON.stringify(value)}`]);
+  const replaced = new Set();
+  const header = match[1].split('\n').map(line => {
+    const separator = line.indexOf(':');
+    const key = separator > 0 ? line.slice(0, separator) : '';
+    const override = rendered.find(([name]) => name === key);
+    if (!override) return line;
+    replaced.add(key);
+    return override[1];
+  });
+  for (const [key, line] of rendered) if (!replaced.has(key)) header.push(line);
+  return `---\n${header.join('\n')}\n---\n${match[2]}`;
+}
 function writeJson(path, value) {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
@@ -44,6 +62,8 @@ export function generateDistributions(root, bundleDirectory) {
   // Validate all inputs before replacing any generated output.
   for (const folder of ['shared', 'packaging']) files(join(root, folder));
   files(bundleDirectory);
+  for (const bundled of ['server.cjs', 'cli.cjs', 'THIRD_PARTY_LICENSES.txt'])
+    if (!inputStat(join(bundleDirectory, bundled)).isFile()) throw Error(`Expected bundled runtime file: ${bundled}`);
   if (!inputStat(join(root, 'LICENSE')).isFile()) throw Error('Expected LICENSE to be a regular file');
   const { version } = readJson(join(root, 'package.json'));
   if (!/^\d+\.\d+\.\d+(?:[-+][\w.-]+)?$/.test(version)) throw Error('Invalid package version');
@@ -100,6 +120,28 @@ export function generateDistributions(root, bundleDirectory) {
     writeFileSync(join(root, 'artifacts', name), archive);
     checksums[name] = createHash('sha256').update(archive).digest('hex');
   }
+  const skillOutput = join(root, skillHost);
+  rmSync(skillOutput, { recursive: true, force: true });
+  mkdirSync(join(skillOutput, 'references'), { recursive: true });
+  mkdirSync(join(skillOutput, 'scripts'), { recursive: true });
+  writeFileSync(join(skillOutput, 'SKILL.md'), composeSkillMarkdown(
+    readFileSync(join(root, 'shared/skills/jev-checkpoint/SKILL.md'), 'utf8'),
+    { ...readJson(join(root, 'packaging/workbuddy-skill/frontmatter.json')), version }));
+  copyFileSync(join(root, 'LICENSE'), join(skillOutput, 'LICENSE'));
+  copyFileSync(join(root, 'shared/skills/jev-checkpoint/references/setup.md'), join(skillOutput, 'references/setup.md'));
+  copyFileSync(join(bundleDirectory, 'cli.cjs'), join(skillOutput, 'scripts/cli.cjs'));
+  copyFileSync(join(root, 'shared/scripts/configure.mjs'), join(skillOutput, 'scripts/configure.mjs'));
+  copyFileSync(join(bundleDirectory, 'THIRD_PARTY_LICENSES.txt'), join(skillOutput, 'scripts/THIRD_PARTY_LICENSES.txt'));
+  const skillFiles = files(skillOutput);
+  for (const file of skillFiles) if (file.split('/').length > 3)
+    throw Error(`Skill archive entry exceeds two levels below its root: ${file}`);
+  const skillEntries = {};
+  for (const file of skillFiles) skillEntries[`jev-checkpoint/${file}`] = [readFileSync(join(skillOutput, file)), zipOptions];
+  const skillArchive = zipSync(skillEntries, { level: 9 });
+  if (skillArchive.length > 3 * 1024 * 1024) throw Error('Skill archive exceeds the 3 MB marketplace limit');
+  const skillName = `jev-checkpoint-skill-${version}.zip`;
+  writeFileSync(join(root, 'artifacts', skillName), skillArchive);
+  checksums[skillName] = createHash('sha256').update(skillArchive).digest('hex');
   writeJson(join(root, 'artifacts/SHA256SUMS.json'), checksums);
-  console.log(`Generated ${Object.keys(hosts).join(', ')} packages and ZIP archives (${version}).`);
+  console.log(`Generated ${Object.keys(hosts).join(', ')} plugin packages, the WorkBuddy skill archive and ZIP installers (${version}).`);
 }

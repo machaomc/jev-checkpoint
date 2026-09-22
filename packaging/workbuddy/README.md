@@ -15,7 +15,9 @@ For a downloaded ZIP, extract it and add `/absolute/path/to/jev-checkpoint` as a
 
 The optional private plugin option `api_key` accepts a TypeSafe API key. Leaving it blank preserves JEV_API_KEY or the existing credential-file fallback. If the client does not expose that form, ask the status tool for configureScript and run `node "<returned absolute path>"` in a terminal. From the inner plugin directory, `node scripts/configure.mjs` is the same helper. Never paste keys into chat.
 
-Open a new session and ask to use Jev Checkpoint for a code change. Context is sent to TypeSafe. Maximum two attempts per task, including failures; server counters/cache are per process. Switching hosts does not renew a task budget.
+Open a new session and ask to use Jev Checkpoint for a code change. Context is sent to TypeSafe. Maximum two attempts per task, including failures; MCP counters/cache are per process, and switching hosts or interfaces does not renew a task budget.
+
+This plugin also bundles the CLI at `dist/cli.cjs`, which reaches the same rubric when the MCP server is unavailable; ask the status result for `cliScript`. For a standalone skill instead of this plugin, use `artifacts/jev-checkpoint-skill-<version>.zip` from the repository or the corresponding skill-marketplace listing.
 
 Update through `/plugin marketplace update jev-checkpoint` and `/plugin update jev-checkpoint@jev-checkpoint`, then open a new session. Remove through `/plugin uninstall jev-checkpoint@jev-checkpoint` and optionally `/plugin marketplace remove jev-checkpoint`.
 

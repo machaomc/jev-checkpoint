@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { dirname, resolve } from 'node:path';
-import { CheckpointService, ENDPOINT } from './engine.js';
+import { CheckpointService, ENDPOINT, MAX_ATTEMPTS } from './engine.js';
 import { readCredentials } from './credentials.js';
 import { reviewSchema, MAX_CONTEXT_BYTES } from './input.js';
 
@@ -18,7 +18,7 @@ server.registerTool('jev_checkpoint_status', {
   try { const credentials = readCredentials(); ready = Boolean(credentials.apiKey); source = credentials.source; } catch { /* Sanitized state only. */ }
   const result = { ready, credentialSource: source, authenticationVerified: false,
     configureScript: resolve(dirname(process.argv[1]), '../scripts/configure.mjs'),
-    endpoint: ENDPOINT, model: 'jev-latest', maxAttemptsPerCheckpoint: 2, maxContextBytes: MAX_CONTEXT_BYTES,
+    endpoint: ENDPOINT, model: 'jev-latest', maxAttemptsPerCheckpoint: MAX_ATTEMPTS, maxContextBytes: MAX_CONTEXT_BYTES,
     budgetScope: 'checkpoint ID within this MCP process; resets on restart; not an account spending cap' };
   return { content: [{ type: 'text', text: JSON.stringify(result) }], structuredContent: result };
 });

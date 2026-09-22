@@ -15,6 +15,8 @@ Open a new task. Ask Jev Checkpoint to check status and return configureScript. 
 
 Use `$jev-checkpoint` to review a focused code change after local validation. Context is sent to TypeSafe. Maximum two outgoing attempts per task, including failures. Server counters are per process, not shared across hosts. Scores are hints, not proven defects.
 
+This plugin also bundles the CLI at `dist/cli.cjs` for environments where the MCP server cannot start; ask the status result for `cliScript`. Choose one interface per checkpoint, because switching interfaces does not reset the two-attempt budget.
+
 Update with `codex plugin marketplace upgrade jev-checkpoint`, then `codex plugin add jev-checkpoint@jev-checkpoint` and open a new task. Remove with `codex plugin remove jev-checkpoint@jev-checkpoint` and, if no longer needed, `codex plugin marketplace remove jev-checkpoint`.
 
 Full English/Chinese instructions: https://github.com/machaomc/jev-checkpoint

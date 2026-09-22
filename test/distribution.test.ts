@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve, dirname } from 'node:path';
 import { createHash } from 'node:crypto';
 import { unzipSync } from 'fflate';
+import { spawnSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 
@@ -72,7 +73,7 @@ test('all archives contain the same runtime and skill, exclude host-only metadat
     assert.equal(createHash('sha256').update(bytes).digest('hex'), hashes[name]);
     return unzipSync(bytes);
   });
-  for (const file of ['dist/server.cjs', 'skills/jev-checkpoint/SKILL.md', 'scripts/configure.mjs']) {
+  for (const file of ['dist/server.cjs', 'dist/cli.cjs', 'skills/jev-checkpoint/SKILL.md', 'scripts/configure.mjs']) {
     assert.ok(packages[0][`jev-checkpoint/plugins/jev-checkpoint/${file}`]);
     assert.deepEqual(packages[0][`jev-checkpoint/plugins/jev-checkpoint/${file}`], packages[1][`jev-checkpoint/plugins/jev-checkpoint/${file}`]);
     assert.deepEqual(packages[0][`jev-checkpoint/plugins/jev-checkpoint/${file}`], packages[2][`jev-checkpoint/plugins/jev-checkpoint/${file}`]);
@@ -112,6 +113,7 @@ test('rebuilding distributions removes stale output and produces identical archi
     const bundle = join(dir, 'bundle');
     mkdirSync(bundle);
     writeFileSync(join(bundle, 'server.cjs'), '// fixture runtime\n');
+    writeFileSync(join(bundle, 'cli.cjs'), '// fixture cli\n');
     writeFileSync(join(bundle, 'THIRD_PARTY_LICENSES.txt'), 'fixture notices\n');
     generateDistributions(dir, bundle);
     const archive = join(dir, `artifacts/jev-checkpoint-workbuddy-${version}.zip`);
@@ -138,6 +140,8 @@ for (const resource of ['shared', 'packaging', 'bundle', 'LICENSE']) test(`packa
     const bundle = join(root, 'bundle');
     mkdirSync(bundle);
     writeFileSync(join(bundle, 'server.cjs'), '// fixture runtime\n');
+    writeFileSync(join(bundle, 'cli.cjs'), '// fixture cli\n');
+    writeFileSync(join(bundle, 'THIRD_PARTY_LICENSES.txt'), 'fixture notices\n');
     const input = join(root, resource);
     const external = join(dir, 'external-resource');
     renameSync(input, external);
@@ -149,5 +153,77 @@ for (const resource of ['shared', 'packaging', 'bundle', 'LICENSE']) test(`packa
     assert.throws(() => generateDistributions(root, bundle), /symlink/i);
     assert.equal(readFileSync(sentinel, 'utf8'), 'preserve existing output on invalid input');
     assert.equal(existsSync(join(root, 'artifacts')), false);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+const skillEntries = [
+  'jev-checkpoint/LICENSE', 'jev-checkpoint/SKILL.md', 'jev-checkpoint/references/setup.md',
+  'jev-checkpoint/scripts/THIRD_PARTY_LICENSES.txt', 'jev-checkpoint/scripts/cli.cjs', 'jev-checkpoint/scripts/configure.mjs'
+];
+
+test('the skill archive ships the CLI instead of an MCP server and stays inside the marketplace limits', () => {
+  const name = `jev-checkpoint-skill-${version}.zip`;
+  const bytes = readFileSync(join('artifacts', name));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), JSON.parse(readFileSync('artifacts/SHA256SUMS.json', 'utf8'))[name]);
+  assert.ok(bytes.length <= 3 * 1024 * 1024, 'Skill archive must stay below the 3 MB limit');
+  const entries = unzipSync(bytes);
+  assert.deepEqual(Object.keys(entries).sort(), skillEntries);
+  for (const entry of skillEntries) assert.ok(entry.split('/').length <= 3, `Nested deeper than the marketplace limit: ${entry}`);
+  const markdown = Buffer.from(entries['jev-checkpoint/SKILL.md']).toString('utf8');
+  for (const field of ['name', 'description', 'description_zh', 'description_en', 'display_name', 'display_name_en', 'author'])
+    assert.match(markdown, new RegExp(`^${field}: `, 'm'), `Skill frontmatter is missing ${field}`);
+  assert.equal(JSON.parse(/^version: (.*)$/m.exec(markdown)![1]), version);
+  assert.ok(!markdown.includes('dist/server.cjs'), 'The skill archive must not point at an MCP server it cannot install');
+});
+
+test('the extracted skill CLI reports its own paths and enforces the persisted attempt budget', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jev skill cli '));
+  const state = join(dir, 'state.json');
+  const payload = join(dir, 'payload.json');
+  const record = (task: string, attempts: number, ageHours = 0) => writeFileSync(state,
+    JSON.stringify({ checkpoints: { 'skill-cli-smoke': { task, attempts, updatedAt: Date.now() - ageHours * 3600 * 1000 } } }));
+  try {
+    extract(readFileSync(`artifacts/jev-checkpoint-skill-${version}.zip`), dir);
+    const root = join(dir, 'jev-checkpoint');
+    const cli = join(root, 'scripts/cli.cjs');
+    const run = (args: string[]) => spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8', cwd: dir,
+      env: { ...process.env, JEV_API_KEY: '', JEV_CHECKPOINT_PLUGIN_KEY: '',
+        JEV_CHECKPOINT_CONFIG: join(dir, 'absent.json'), JEV_CHECKPOINT_STATE: state } });
+
+    const status = run(['status']);
+    assert.equal(status.status, 0);
+    const reported = JSON.parse(status.stdout);
+    assert.equal(reported.interface, 'cli');
+    assert.equal(reported.version, version);
+    assert.equal(reported.ready, false);
+    assert.equal(reported.authenticationVerified, false);
+    assert.equal(reported.maxAttemptsPerCheckpoint, 2);
+    assert.ok(String(reported.cliScript).endsWith('scripts/cli.cjs'));
+    assert.ok(existsSync(String(reported.cliScript)));
+    assert.ok(String(reported.configureScript).endsWith('scripts/configure.mjs'));
+    assert.ok(existsSync(String(reported.configureScript)));
+
+    writeFileSync(payload, JSON.stringify({ checkpointId: 'skill-cli-smoke', task: 'Fix sum', diff: '-a-b\n+a+b' }));
+    record('Fix sum', 2);
+    const exhausted = run(['review', payload]);
+    assert.equal(exhausted.status, 1);
+    assert.equal(JSON.parse(exhausted.stdout).error.code, 'BUDGET_EXHAUSTED');
+
+    record('A different task', 1);
+    const mismatched = run(['review', payload]);
+    assert.equal(mismatched.status, 1);
+    assert.equal(JSON.parse(mismatched.stdout).error.code, 'TASK_MISMATCH');
+
+    record('Fix sum', 2, 13);
+    const expired = run(['review', payload]);
+    assert.equal(JSON.parse(expired.stdout).error.code, 'MISSING_API_KEY', 'An expired ledger entry must be forgiven');
+
+    const inline = run(['review', JSON.stringify({ checkpointId: 'x', task: 't', diff: 'd' })]);
+    assert.equal(JSON.parse(inline.stdout).error.code, 'INVALID_INPUT', 'Payload content must not be accepted as an argument');
+
+    const piped = spawnSync(process.execPath, [cli, 'review', '-'], { input: readFileSync(payload), encoding: 'utf8', cwd: dir,
+      env: { ...process.env, JEV_API_KEY: '', JEV_CHECKPOINT_PLUGIN_KEY: '',
+        JEV_CHECKPOINT_CONFIG: join(dir, 'absent.json'), JEV_CHECKPOINT_STATE: state } });
+    assert.equal(JSON.parse(piped.stdout).error.code, 'MISSING_API_KEY', 'stdin payloads must reach the service layer');
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

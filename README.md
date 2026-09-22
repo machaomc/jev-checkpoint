@@ -2,7 +2,7 @@
 
 [简体中文](README.zh-CN.md)
 
-One shared review skill and bundled local MCP server, packaged separately for **Codex, Claude Code and WorkBuddy**. Your coding assistant implements, diagnoses and tests; TypeSafe's Jev supplies independent quality signals. Each task checkpoint gets at most **two outgoing API attempts per MCP process**, including failures.
+One shared review skill with two interchangeable interfaces — a bundled local **MCP server** and a bundled **CLI** — packaged separately for **Codex, Claude Code and WorkBuddy**, plus a CLI-only archive for the **WorkBuddy skill marketplace**. Your coding assistant implements, diagnoses and tests; TypeSafe's Jev supplies independent quality signals. Each task checkpoint gets at most **two outgoing API attempts**, including failures.
 
 This is a community project by [machaomc](https://github.com/machaomc), not an official OpenAI, Anthropic, Tencent or TypeSafe product. It does not replace your coding assistant's model, automatically route every prompt, or promise a fixed speedup or saving.
 
@@ -53,6 +53,19 @@ Get a key from [TypeSafe](https://console.typesafe.ai/). This version calls `htt
 
 `ready: true` only verifies that local credentials are present. A successful review verifies API authentication.
 
+## Install as a WorkBuddy skill (CLI-only)
+
+The WorkBuddy skill marketplace distributes instructions and scripts, and never registers an MCP server. For that channel this project builds a separate archive in which the skill drives the bundled CLI directly:
+
+```sh
+npm run build
+# artifacts/jev-checkpoint-skill-0.2.0.zip   (SHA-256 in artifacts/SHA256SUMS.json)
+```
+
+Upload that ZIP as-is; do not upload the extracted directory or a single `SKILL.md`. Open a new task, ask to use Jev Checkpoint, and the skill reports the `cliScript` and `configureScript` paths of the installed copy. A TypeSafe API key is still required, and the same 48,000-byte context limit and two-attempt budget apply. The CLI counts attempts per user and machine, so the count survives separate shell invocations and expires after twelve hours.
+
+The plugin packages above also ship the same CLI at `dist/cli.cjs`. Choose one interface per checkpoint; switching does not renew the task budget.
+
 ## Use
 
 > Use Jev Checkpoint while implementing this change. Run relevant checks, review the task-owned diff, and fix only code-backed problems.
@@ -73,6 +86,15 @@ Codex supports `$jev-checkpoint`; Claude Code exposes `/jev-checkpoint:jev-check
 | --- | --- |
 | `jev_checkpoint_status` | Local configuration diagnosis; no paid request and no credential output. |
 | `jev_checkpoint_review` | Sends explicit code context to TypeSafe; never discovers, reads or edits repository files. |
+
+Both interfaces make the same calls; ask the status result for `cliScript` rather than guessing its path. To submit over the CLI, write the same JSON object to a temporary file outside the repository and run:
+
+```sh
+node "<cliScript>" review /tmp/jev-payload.json
+node "<cliScript>" review - < /tmp/jev-payload.json
+```
+
+It prints one JSON object on stdout and exits non-zero unless `status` is `evaluated`. Pass the payload as a file or stdin — never as a command argument — and delete the temporary file afterwards.
 
 Example review arguments:
 
@@ -117,6 +139,7 @@ Common credential patterns, credential-file paths, and the configured key are re
 | `INVALID_RESPONSE` | Report an API compatibility issue; no score is available. |
 | `CONTEXT_TOO_LARGE` | Reduce unrelated context; do not truncate essential contracts. |
 | `BUDGET_EXHAUSTED` | Continue local verification and disclose that Jev cannot review further changes in this task. |
+| `TASK_MISMATCH` (CLI) | This checkpoint ID already carried different task wording on this machine; a genuinely different task needs its own ID. |
 
 For Codex, refresh the market and reinstall, then start a new task. Claude Code/WorkBuddy update and removal commands are in [compatibility](docs/compatibility.md).
 
@@ -143,9 +166,9 @@ npm run validate
 
 The default suite uses local HTTP-response fixtures, not live Jev. It checks budgets, concurrency, cache behavior, schema handling, privacy boundaries, credentials and real MCP stdio transport. A standalone-install test copies only the plugin directory outside the repo and starts it without `node_modules`.
 
-`npm run build` (also `npm run package`) compiles the core once, generates all three plugin directories and marketplaces, and writes reproducible ZIP installers plus `SHA256SUMS.json` into `artifacts/`. Each ZIP contains its own local marketplace. Add the extracted outer `jev-checkpoint` directory using the host's marketplace command, then install the plugin. CI uploads all three ZIPs as the `jev-checkpoint-installers` artifact.
+`npm run build` (also `npm run package`) compiles the MCP server and the CLI from `src/`, generates all three plugin directories and marketplaces plus `packages/workbuddy-skill/jev-checkpoint` for the skill channel, and writes reproducible ZIP installers plus `SHA256SUMS.json` into `artifacts/`. Each plugin ZIP contains its own local marketplace. Add the extracted outer `jev-checkpoint` directory using the host's marketplace command, then install the plugin. CI uploads every ZIP as the `jev-checkpoint-installers` artifact.
 
-Edit `src/`, `shared/` and `packaging/`, not generated output. The version is owned by `package.json`. Commit generated `plugins/jev-checkpoint`, `packages/claude/jev-checkpoint`, `packages/workbuddy/jev-checkpoint` and marketplace manifests alongside source. CI rebuilds and checks for drift on Linux, macOS and Windows. No `npm install` is needed inside an installed package.
+Edit `src/`, `shared/` and `packaging/`, not generated output. The version is owned by `package.json`. Commit generated `plugins/jev-checkpoint`, `packages/claude/jev-checkpoint`, `packages/workbuddy/jev-checkpoint`, `packages/workbuddy-skill/jev-checkpoint` and marketplace manifests alongside source. CI rebuilds and checks for drift on Linux, macOS and Windows. No `npm install` is needed inside an installed package.
 
 Optional **paid** end-to-end smoke test, after configuring your own key:
 
@@ -159,7 +182,9 @@ It sends two synthetic code examples, verifies cache reuse and blocks the third 
 
 This GitHub repository contains custom marketplace entries for Codex (`.agents/plugins`), Claude Code (`.claude-plugin`) and WorkBuddy (`.codebuddy-plugin`). Adding its URL makes its plugin available to that user; it does not submit or list it in OpenAI's official public directory. Current official submission guidance expects a public HTTPS MCP endpoint for the usual With MCP route; this release intentionally uses local stdio. See [OpenAI packaging documentation](https://developers.openai.com/plugins/build/plugins).
 
-Each marketplace selects its host-specific package. A generic “install a skill from URL” flow may install just the instructions and omit MCP; use the complete package. See [verification](docs/verification.md) for the distinction between native CLI installation, MCP checks and full GUI/model workflows.
+Each marketplace selects its host-specific package. A generic “install a skill from URL” flow on a plugin host may install just the instructions and omit MCP; use the complete plugin package there.
+
+The WorkBuddy skill marketplace is a separate channel with its own artifact. It accepts an instruction-only skill, so this project ships the CLI inside it and the skill never claims to register MCP. See the [skill build notes](packaging/workbuddy-skill/README.md) and [verification](docs/verification.md) for the distinction between native CLI installation, MCP checks and full GUI/model workflows.
 
 ## Credits and license
 

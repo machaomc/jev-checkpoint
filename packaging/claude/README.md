@@ -15,6 +15,8 @@ Ask the status tool for configureScript and run `node "<returned absolute path>"
 
 Context is sent to TypeSafe. Maximum two outgoing attempts per task, including failures. A host switch does not renew this policy; transfer the ID, attempts used and last result. Server counters/cache are process-local.
 
+This plugin also bundles the CLI at `dist/cli.cjs` for environments where the MCP server cannot start; ask the status result for `cliScript`. Choose one interface per checkpoint, because switching interfaces does not reset the two-attempt budget.
+
 Update with `claude plugin marketplace update jev-checkpoint` and `claude plugin update jev-checkpoint@jev-checkpoint`, then reload plugins or open a new session. Remove with `claude plugin uninstall jev-checkpoint@jev-checkpoint` and optionally `claude plugin marketplace remove jev-checkpoint`.
 
 Full English/Chinese instructions: https://github.com/machaomc/jev-checkpoint

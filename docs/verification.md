@@ -17,6 +17,17 @@ Recorded 2026-09-22. The core, shared skill and credential helper now generate C
 - All three remote-installed runtime copies passed `scripts/smoke-installed.mjs`: both tools discovered, credential helper present, missing-key handling correct, zero paid requests. Claude's native `mcp list` also reported the remote-installed plugin connected.
 - GUI secret-entry and automatic Skill invocation in Claude Code/WorkBuddy remain untested; native validation and protocol startup do not prove those flows.
 
+## v0.2.0 — bundled CLI and WorkBuddy skill archive
+
+Recorded 2026-09-22. The plugin packages now also carry a standalone CLI, and a fourth CLI-only archive targets the WorkBuddy skill marketplace, which installs instructions and scripts but never registers an MCP server.
+
+- Local `npm run validate` on macOS Node 22.22.2: TypeScript check, reproducible build, **38 tests** and package validation passed. The new cases cover the skill archive layout, its checksum and its frontmatter, and drive the extracted `scripts/cli.cjs` through status, the persisted budget, an expired ledger entry, argv payload rejection and stdin submission.
+- `scripts/smoke-installed.mjs` against the committed `plugins/jev-checkpoint`: both MCP tools discovered, the bundled `dist/cli.cjs` reporting `interface: cli` with a resolving `configureScript`, missing-key handling correct over both interfaces, zero paid requests.
+- CLI budget behaviour, exercised with a synthetic ledger and no API key: a checkpoint already at two attempts is refused with `BUDGET_EXHAUSTED` **without an outgoing request**; different task wording for the same ID returns `TASK_MISMATCH`; a ledger entry older than twelve hours is forgiven; `JEV_CHECKPOINT_STATE=off` disables the ledger. Payload content passed as a command argument is rejected as `INVALID_INPUT`.
+- Skill archive: 135,405 bytes against the 3 MB marketplace limit; six entries, none deeper than two levels below the archive root; frontmatter carrying `name`, `description`, `description_zh`, `description_en`, `display_name`, `display_name_en`, `author` and a `version` that matches `package.json`. The instructions body stays byte-identical to the shared skill body, so the channels cannot drift apart.
+- Host independence: the CLI needs only Node.js 20+ and a shell, so Codex and Claude Code can use it as well. Both already register MCP through their plugin manifests, so there the CLI is a fallback rather than a requirement; only the skill-market archive depends on it.
+- Not verified in this revision: the hosted CI matrix, a real marketplace submission, the Windows CLI path, and any live TypeSafe evaluation of the CLI path. Local tests use fixtures and send no request, so no credential was needed or stored.
+
 ## v0.1.0 — initial Codex release
 
 Recorded 2026-09-22. The checks below are observations, not a guarantee that all code defects will be detected.

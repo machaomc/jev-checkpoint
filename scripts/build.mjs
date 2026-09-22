@@ -7,12 +7,17 @@ const bundleDirectory = resolve('work/build/runtime');
 rmSync(bundleDirectory, { recursive: true, force: true });
 mkdirSync(bundleDirectory, { recursive: true });
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
-const result = await build({ entryPoints: ['src/server.ts'], outfile: join(bundleDirectory, 'server.cjs'),
-  bundle: true, platform: 'node', format: 'cjs', target: 'node20', minify: false,
-  define: { __JEV_VERSION__: JSON.stringify(version) },
-  legalComments: 'external', metafile: true, sourcemap: false });
+const entries = { server: 'src/server.ts', cli: 'src/cli.ts' };
+const metafiles = [];
+for (const [name, entry] of Object.entries(entries)) {
+  const result = await build({ entryPoints: [entry], outfile: join(bundleDirectory, `${name}.cjs`),
+    bundle: true, platform: 'node', format: 'cjs', target: 'node20', minify: false,
+    define: { __JEV_VERSION__: JSON.stringify(version) },
+    legalComments: 'external', metafile: true, sourcemap: false });
+  metafiles.push(result.metafile);
+}
 const packages = new Map();
-for (const input of Object.keys(result.metafile.inputs).filter(p => p.includes('node_modules/'))) {
+for (const metafile of metafiles) for (const input of Object.keys(metafile.inputs).filter(p => p.includes('node_modules/'))) {
   let directory = dirname(resolve(input));
   while (directory.includes('node_modules')) {
     const manifest = join(directory, 'package.json');
@@ -29,5 +34,5 @@ const notices = [...packages.entries()].sort((a, b) => a[1].name.localeCompare(b
   return `${pkg.name}@${pkg.version} (${pkg.license})\n${readFileSync(license, 'utf8')}`;
 });
 writeFileSync(join(bundleDirectory, 'THIRD_PARTY_LICENSES.txt'), notices.join('\n\n---\n\n'));
-console.log(`Built standalone MCP server; included notices for ${notices.length} dependencies.`);
+console.log(`Built standalone ${Object.keys(entries).join(' and ')} bundles; included notices for ${notices.length} dependencies.`);
 generateDistributions(process.cwd(), bundleDirectory);

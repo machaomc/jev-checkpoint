@@ -36747,7 +36747,7 @@ server.registerTool("jev_checkpoint_status", {
     configureScript: (0, import_node_path2.resolve)((0, import_node_path2.dirname)(process.argv[1]), "../scripts/configure.mjs"),
     endpoint: ENDPOINT,
     model: "jev-latest",
-    maxAttemptsPerCheckpoint: 2,
+    maxAttemptsPerCheckpoint: MAX_ATTEMPTS,
     maxContextBytes: MAX_CONTEXT_BYTES,
     budgetScope: "checkpoint ID within this MCP process; resets on restart; not an account spending cap"
   };

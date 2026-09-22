@@ -1,7 +1,15 @@
 ---
 name: jev-checkpoint
-description: Use when the user requests Jev Checkpoint, or when a coding task changes behavior, contracts, reliability, security boundaries, or multiple related files and Jev Checkpoint tools are available. Usually skip formatting and prose-only edits.
+description: "Use when the user requests Jev Checkpoint, or when a coding task changes behavior, contracts, reliability, security boundaries, or multiple related files. Usually skip formatting and prose-only edits. 当用户要求 Jev 检查点，或代码改动涉及行为、接口契约、可靠性、安全边界或多个相关文件时使用；纯格式与文案改动跳过。"
 allowed-tools: Read, Write, Bash
+display_name: "Jev 代码质量检查点"
+display_name_en: "Jev Checkpoint"
+description_zh: "在关键代码改动后，用 Jev 检查点给本次 diff 打分（六个维度各 0–4 分并附置信度），把评分当作质量信号辅助自查，每个任务最多评估两次。技能自带命令行工具，装完即可使用，只需另行配置一个 TypeSafe API 密钥；评估时当前任务的代码 diff 会发送到 TypeSafe 服务。"
+description_en: "Score a focused code change with Jev checkpoints (six dimensions, 0-4 each, plus confidence) as an extra quality signal after a coding task, at most two evaluations per task. Ships its own command-line tool, so no MCP setup is required; a TypeSafe API key is needed and the task diff is sent to the TypeSafe service for scoring."
+author: "machaomc"
+homepage: "https://github.com/machaomc/jev-checkpoint"
+license: "MIT"
+version: "0.2.0"
 ---
 
 # Jev Checkpoint

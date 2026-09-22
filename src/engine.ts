@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { reviewSchema, containsSensitiveContext, MAX_CONTEXT_BYTES, type ReviewInput } from './input.js';
 import { questions, parseEvaluation, type Evaluation } from './rubric.js';
 export const ENDPOINT = 'https://api.typesafe.ai/v1/systemone';
-const MAX_ATTEMPTS = 2;
+export const MAX_ATTEMPTS = 2;
 type Result = {
   status: 'evaluated' | 'unavailable' | 'blocked'; requestsRemaining: number;
   checkpointId?: string; error?: { code: string; message: string }; cached?: boolean;

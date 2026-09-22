@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "jev-checkpoint": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CODEBUDDY_PLUGIN_ROOT}/dist/server.cjs"
+      ],
+      "env": {
+        "JEV_CHECKPOINT_PLUGIN_KEY": "${user_config.api_key}"
+      }
+    }
+  }
+}

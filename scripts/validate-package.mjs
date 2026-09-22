@@ -10,6 +10,7 @@ for (const [file, schema] of [['plugin.json', 'plugin.schema.json'], ['mcp.json'
   assert.ok(valid(read(join(root, file))), JSON.stringify(valid.errors));
 }
 const manifest = read(join(root, 'plugin.json'));
+assert.equal(manifest.version, read('package.json').version);
 const legacy = read(join(root, '.codex-plugin/plugin.json'));
 assert.equal(manifest.name, legacy.name);
 assert.equal(manifest.version, legacy.version);
@@ -32,4 +33,28 @@ function inspect(directory) {
   }
 }
 inspect(root);
-console.log('Package schemas, marketplace paths, metadata and bundled runtime files verified.');
+for (const [host, folder, variable] of [
+  ['claude', '.claude-plugin', '${CLAUDE_PLUGIN_ROOT}'],
+  ['workbuddy', '.codebuddy-plugin', '${CODEBUDDY_PLUGIN_ROOT}']
+]) {
+  const target = resolve(`packages/${host}/jev-checkpoint`);
+  const hostManifest = read(join(target, folder, 'plugin.json'));
+  assert.equal(hostManifest.name, manifest.name);
+  assert.equal(hostManifest.version, manifest.version);
+  const marketplace = read(join(folder, 'marketplace.json'));
+  assert.equal(resolve(marketplace.plugins[0].source), target);
+  assert.equal(marketplace.plugins[0].version, manifest.version);
+  const config = read(join(target, '.mcp.json')).mcpServers['jev-checkpoint'];
+  assert.equal(config.command, 'node');
+  assert.deepEqual(config.args, [`${variable}/dist/server.cjs`]);
+  for (const file of ['dist/server.cjs', 'dist/THIRD_PARTY_LICENSES.txt', 'scripts/configure.mjs', 'skills/jev-checkpoint/SKILL.md']) {
+    assert.deepEqual(readFileSync(join(target, file)), readFileSync(join(root, file)));
+  }
+  if (host === 'workbuddy') {
+    assert.equal(hostManifest.userConfig.api_key.sensitive, true);
+    assert.equal(hostManifest.userConfig.api_key.default, '');
+    assert.equal(config.env.JEV_CHECKPOINT_PLUGIN_KEY, '${user_config.api_key}');
+  }
+  inspect(target);
+}
+console.log('Three host packages: schemas, marketplace paths, metadata and common runtime verified.');

@@ -1,0 +1,10 @@
+{
+  "api_key": {
+    "type": "string",
+    "title": "TypeSafe API key",
+    "description": "Optional TypeSafe API key. Leave empty to use JEV_API_KEY or the local credential helper. Never paste it into chat.",
+    "sensitive": true,
+    "required": false,
+    "default": ""
+  }
+}

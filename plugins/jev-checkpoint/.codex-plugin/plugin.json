@@ -1,7 +1,6 @@
 {
   "name": "jev-checkpoint",
-  "version": "0.1.0",
-  "description": "Focused Jev quality checkpoints for Codex with bounded API calls.",
+  "description": "Focused Jev quality checkpoints for coding assistants with bounded API calls.",
   "author": {
     "name": "machaomc",
     "url": "https://github.com/machaomc"
@@ -11,17 +10,20 @@
   "license": "MIT",
   "keywords": [
     "codex",
+    "claude-code",
+    "workbuddy",
     "jev",
     "mcp",
     "code-review",
     "skills"
   ],
+  "version": "0.2.0",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Jev Checkpoint",
     "shortDescription": "Focused code review with a two-attempt Jev budget",
-    "longDescription": "Codex implements and validates; Jev supplies independent quality signals for focused diffs. Includes local MCP tools, credential setup and a bounded review skill. Requires Node.js 20+ and your own TypeSafe API key.",
+    "longDescription": "Your coding assistant implements and validates; Jev supplies independent quality signals for focused diffs. Includes local MCP tools, credential setup and a bounded review skill. Requires Node.js 20+ and your own TypeSafe API key.",
     "developerName": "machaomc",
     "category": "Developer Tools",
     "capabilities": [

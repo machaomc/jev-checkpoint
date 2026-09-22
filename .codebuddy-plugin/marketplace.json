@@ -1,0 +1,17 @@
+{
+  "name": "jev-checkpoint",
+  "owner": {
+    "name": "machaomc"
+  },
+  "metadata": {
+    "description": "Jev Checkpoint for WorkBuddy"
+  },
+  "plugins": [
+    {
+      "name": "jev-checkpoint",
+      "source": "./packages/workbuddy/jev-checkpoint",
+      "description": "Focused Jev quality checkpoints for coding assistants with bounded API calls.",
+      "version": "0.2.0"
+    }
+  ]
+}

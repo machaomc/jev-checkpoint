@@ -1,0 +1,17 @@
+{
+  "displayName": "Jev Checkpoint",
+  "shortDescription": "Focused code review with a two-attempt Jev budget",
+  "longDescription": "Your coding assistant implements and validates; Jev supplies independent quality signals for focused diffs. Includes local MCP tools, credential setup and a bounded review skill. Requires Node.js 20+ and your own TypeSafe API key.",
+  "developerName": "machaomc",
+  "category": "Developer Tools",
+  "capabilities": [
+    "MCP tools",
+    "Agent Skill",
+    "Code review"
+  ],
+  "websiteURL": "https://github.com/machaomc/jev-checkpoint",
+  "defaultPrompt": [
+    "Use Jev Checkpoint to review this change after validation.",
+    "用 Jev Checkpoint 评估当前任务的代码变更，并核实需要改进的地方。"
+  ]
+}

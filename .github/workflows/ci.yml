@@ -14,12 +14,19 @@ jobs:
           - { os: windows-latest, node: 22 }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm run validate
-      - name: Ensure checked-in runtime matches source
-        run: git diff --exit-code -- plugins/jev-checkpoint/dist
+      - name: Ensure generated packages match their sources
+        run: git diff --exit-code -- plugins packages .agents/plugins .claude-plugin .codebuddy-plugin
+      - name: Upload the three installation archives and checksums
+        if: matrix.os == 'ubuntu-latest' && matrix.node == 22
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: jev-checkpoint-installers
+          path: artifacts/
+          if-no-files-found: error

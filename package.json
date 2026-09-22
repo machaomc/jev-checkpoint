@@ -1,17 +1,30 @@
 {
   "name": "jev-checkpoint-workspace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "node scripts/build.mjs",
     "check": "tsc --noEmit",
     "test": "node scripts/test.mjs",
     "validate": "npm run check && npm run build && npm test && node scripts/validate-package.mjs",
     "smoke:live": "node scripts/live-smoke.mjs",
-    "configure": "node plugins/jev-checkpoint/scripts/configure.mjs"
+    "configure": "node shared/scripts/configure.mjs",
+    "package": "node scripts/build.mjs"
   },
-  "dependencies": { "@modelcontextprotocol/sdk": "1.30.0", "zod": "4.6.5" },
-  "devDependencies": { "@types/node": "^22.0.0", "esbuild": "^0.25.0", "tsx": "^4.20.0", "typescript": "^5.9.0", "ajv": "^8.17.1" }
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "ajv": "^8.17.1",
+    "esbuild": "^0.25.0",
+    "fflate": "0.8.3",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
 }

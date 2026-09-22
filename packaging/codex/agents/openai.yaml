@@ -1,0 +1,6 @@
+interface:
+  display_name: "Jev Checkpoint"
+  short_description: "Focused Jev review with a two-attempt task budget"
+  default_prompt: "Use $jev-checkpoint to evaluate this change after validation and inspect any meaningful weaknesses."
+policy:
+  allow_implicit_invocation: true

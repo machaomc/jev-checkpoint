@@ -15,6 +15,22 @@ test('a missing config does not prevent no-key diagnostics', () => {
   assert.equal(result.apiKey, undefined);
   assert.equal(result.source, 'missing');
 });
+test('host secret form works without a credential file and explicit environment takes precedence', () => {
+  const env = { JEV_CHECKPOINT_PLUGIN_KEY: '  test-host-key  ', JEV_CHECKPOINT_CONFIG: '/missing/config.json' };
+  assert.equal(readCredentials(env).apiKey, 'test-host-key');
+  assert.equal(readCredentials(env).source, 'plugin');
+  assert.equal(readCredentials({ ...env, JEV_API_KEY: 'test-explicit-key' }).apiKey, 'test-explicit-key');
+});
+test('an empty host secret form preserves the local-file fallback', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'jev-empty-host-'));
+  const config = join(dir, 'credentials.json');
+  try {
+    writeFileSync(config, JSON.stringify({ apiKey: 'test-file-key' }));
+    const result = readCredentials({ JEV_CHECKPOINT_PLUGIN_KEY: '  ', JEV_CHECKPOINT_CONFIG: config });
+    assert.equal(result.apiKey, 'test-file-key');
+    assert.equal(result.source, 'file');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
 test('GUI processes read a user-local credential file without inherited secrets', () => {
   const dir = mkdtempSync(join(tmpdir(), 'jev-config-'));
   const path = join(dir, 'credentials.json');

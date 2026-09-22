@@ -1,4 +1,19 @@
-# Verification evidence — v0.1.0
+# Verification evidence
+
+## v0.2.0 — multi-host packages
+
+Recorded 2026-09-22. The core, shared skill and credential helper now generate Codex, Claude Code and WorkBuddy packages and ZIP installers.
+
+- Local `npm run validate`: 36 tests passed, including extracted ZIP startup outside the repository with spaces in the path, self-contained marketplace resolution, identical shared payloads, archive checksums/reproducibility, stale-output cleanup and symlink rejection.
+- WorkBuddy optional secret configuration reaches MCP through the generated configuration; status reports `credentialSource: plugin` without exposing the synthetic value. An empty option preserves the old environment/file fallback. These tests make no TypeSafe request.
+- Claude Code `2.1.117`: native marketplace and plugin validation passed; local marketplace installation succeeded in an isolated test profile; `claude mcp list` reported the plugin MCP connected. The initial native check rejected a newer top-level marketplace description field, which was moved under `metadata` for backward compatibility.
+- WorkBuddy `5.5.6`, using its bundled CodeBuddy CLI: native marketplace and plugin validation passed; local marketplace installation succeeded in an isolated test profile. The copied installed server passed MCP discovery and missing-key checks. Its `mcp list` subcommand did not enumerate plugin-provided servers, so it was not counted as plugin health evidence.
+- Independent final review found that symlinked input roots and a symlinked LICENSE could bypass the packaging boundary. Four regression cases first reproduced the issue, then passed after validation was added before output replacement; the full 36-test suite passed. These POSIX symlink cases are explicitly skipped on Windows. No other actionable finding remained.
+- The revised shared skill passed five document-driven scenarios covering namespaced tools, missing MCP, existing host credentials, exhausted cross-host handoffs and a single remaining attempt. These are instruction simulations, not live model behavior measurements.
+- The last authenticated TypeSafe smoke test remains the v0.1.0 result below. This packaging release did not reuse the temporary key or send real requests.
+- Hosted CI and remote URL installation results are recorded after publication. GUI secret-entry and automatic Skill invocation in Claude Code/WorkBuddy remain untested; native validation and protocol startup do not prove those flows.
+
+## v0.1.0 — initial Codex release
 
 Recorded 2026-09-22. The checks below are observations, not a guarantee that all code defects will be detected.
 

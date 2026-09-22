@@ -5,6 +5,8 @@ export function readCredentials(env: NodeJS.ProcessEnv = process.env): { apiKey?
   const configPath = env.JEV_CHECKPOINT_CONFIG || join(homedir(), '.config', 'jev-checkpoint', 'credentials.json');
   const key = env.JEV_API_KEY?.trim();
   if (key) return { apiKey: key, source: 'environment', configPath };
+  const pluginKey = env.JEV_CHECKPOINT_PLUGIN_KEY?.trim();
+  if (pluginKey) return { apiKey: pluginKey, source: 'plugin', configPath };
   try {
     if (statSync(configPath).size > 16384) throw Error('Invalid configuration');
     const config: unknown = JSON.parse(readFileSync(configPath, 'utf8'));

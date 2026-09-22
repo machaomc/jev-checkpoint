@@ -1,0 +1,31 @@
+{
+  "name": "jev-checkpoint",
+  "description": "Focused Jev quality checkpoints for coding assistants with bounded API calls.",
+  "author": {
+    "name": "machaomc",
+    "url": "https://github.com/machaomc"
+  },
+  "homepage": "https://github.com/machaomc/jev-checkpoint",
+  "repository": "https://github.com/machaomc/jev-checkpoint",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "claude-code",
+    "workbuddy",
+    "jev",
+    "mcp",
+    "code-review",
+    "skills"
+  ],
+  "version": "0.2.0",
+  "userConfig": {
+    "api_key": {
+      "type": "string",
+      "title": "TypeSafe API key",
+      "description": "Optional TypeSafe API key. Leave empty to use JEV_API_KEY or the local credential helper. Never paste it into chat.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
+    }
+  }
+}

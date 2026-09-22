@@ -5,7 +5,8 @@ import { CheckpointService, ENDPOINT } from './engine.js';
 import { readCredentials } from './credentials.js';
 import { reviewSchema, MAX_CONTEXT_BYTES } from './input.js';
 
-const server = new McpServer({ name: 'jev-checkpoint', version: '0.1.0' }, {
+declare const __JEV_VERSION__: string;
+const server = new McpServer({ name: 'jev-checkpoint', version: __JEV_VERSION__ }, {
   instructions: 'Jev supplies quality signals, not defect explanations. Call status before first use. Submit only task-owned, nonsecret context. Reuse one checkpointId per task: at most two outgoing attempts per MCP process, including failures. Never reset IDs to evade that limit. Inspect code before acting on scores. Tests and user requirements take precedence.'
 });
 const service = new CheckpointService({ getApiKey: () => readCredentials().apiKey });

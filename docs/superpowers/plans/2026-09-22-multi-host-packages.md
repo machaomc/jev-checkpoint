@@ -50,7 +50,7 @@
 - [x] Document each host's Git URL installation, ZIP local installation, credential method and update/remove flow; distinguish WorkBuddy native plugins from official connector submission.
 - [x] Extend CI to regenerate all packages, detect drift and retain ZIP/checksum artifacts.
 - [x] Run the complete verification suite, independent final review, required skill/plugin validators and secret/diff checks.
-- [ ] Commit, fast-forward main and push; inspect hosted CI, verify remote marketplace installation and refresh local Codex to the published version.
+- [x] Commit, fast-forward main and push; inspect hosted CI, verify remote marketplace installation and refresh local Codex to the published version.
 
 ## Execution record
 
@@ -64,4 +64,4 @@
 - Skill evidence: five independent instruction scenarios passed; these do not establish automatic invocation in a live host model.
 - Final independent review: one Important finding (symlinked resource roots / LICENSE bypass); four regression tests reproduced it and then passed after input validation. Final `npm run validate`: 36/36 passed. No remaining actionable findings or deferred minors.
 - Final review boundary decisions: GUI credential entry and automatic model invocation remain unverified and are disclosed; durable cross-process budgets remain out of scope and are not promised; official catalog submission remains separate from this native-plugin delivery.
-- Publication and Git URL verification are in progress.
+- Publication: implementation committed as `1b4c0e6`, fast-forwarded to main and pushed. Hosted CI run `35684727748` passed all five jobs. Three hosts installed version 0.2.0 from the Git marketplace and their installed MCP copies passed the zero-paid-request smoke check; Claude also passed its native MCP health check.
